@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: sample
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  web:
+    resources:
+      cache:
+        period: 0
+  thymeleaf:
+    cache: false
+  datasource:
+    url: ENC(Pa0CNIK1Sn2ibl5NZKElMQ4r7/1ncfu1752yKSsVzK843oDoYVZqeTcH3kUdYiW2tCJ591WJIVk=)
+    username: ENC(JbSE9TNHqcKBLhuVCyE6+A==)
+    password: ENC(z0bGkto7ax4WmTuf5BsWAw6s00t38NQs)
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+jasypt:
+  encryptor:
+    password: ${JASYPT_ENCRYPTOR_PASSWORD:sample_secret_key}
+    algorithm: PBEWithMD5AndDES
+    key-obtention-iterations: 1000
+    pool-size: 1
+    provider-name: SunJCE
+    salt-generator-classname: org.jasypt.salt.RandomSaltGenerator
+    string-output-type: base64
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
