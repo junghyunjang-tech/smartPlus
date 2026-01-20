@@ -3,7 +3,7 @@
 ## 📋 사전 요구사항
 
 - Docker: 20.10 이상
-- Docker Compose: 2.0 이상
+- Docker Compose: 2.0 이상 (또는 Docker Compose 플러그인)
 
 ## 🚀 빠른 시작
 
@@ -19,11 +19,19 @@ nano .env
 
 ### 2. Docker Compose로 실행
 
+> **참고**: 최신 Docker에서는 `docker compose` (하이픈 없이) 사용  
+> 구버전에서는 `docker-compose` (하이픈 포함) 사용
+
 ```bash
-# 백그라운드에서 실행
+# 백그라운드에서 실행 (최신 버전)
+docker compose up -d
+
+# 또는 구버전 사용 시
 docker-compose up -d
 
 # 로그 확인
+docker compose logs -f app
+# 또는
 docker-compose logs -f app
 ```
 
@@ -32,7 +40,41 @@ docker-compose logs -f app
 - 애플리케이션: http://localhost:8080
 - PostgreSQL: localhost:5432
 
+## 🔧 Docker Compose 설치
+
+### docker-compose: command not found 에러 발생 시
+
+**방법 1: Docker Compose 플러그인 설치 (권장)**
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install docker-compose-plugin
+
+# CentOS/RHEL
+sudo yum install docker-compose-plugin
+
+# 설치 확인
+docker compose version
+```
+
+**방법 2: 독립 실행형 docker-compose 설치**
+
+```bash
+# 최신 버전 다운로드
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# 실행 권한 부여
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 설치 확인
+docker-compose --version
+```
+
 ## 🛠️ 주요 명령어
+
+> **참고**: 아래 명령어에서 `docker compose`는 최신 버전 기준입니다.  
+> 구버전 사용 시 `docker-compose`로 대체하세요.
 
 ### 컨테이너 관리
 
