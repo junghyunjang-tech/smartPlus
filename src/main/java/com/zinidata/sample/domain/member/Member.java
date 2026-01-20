@@ -38,6 +38,12 @@ public class Member {
     @Convert(converter = EncryptedStringConverter.class)
     private String birthDate;
 
+    /**
+     * 성별 (M:남성, F:여성)
+     */
+    @Column(name = "GENDER", length = 1)
+    private String gender;
+
     @Column(name = "ROLE", length = 20)
     private String role;
 
@@ -53,11 +59,13 @@ public class Member {
     private LocalDateTime chgDt;
 
     @Builder
-    public Member(String memberId, String password, String name, String birthDate, String role, String useYn) {
+    public Member(String memberId, String password, String name, String birthDate, String gender, String role,
+            String useYn) {
         this.memberId = memberId;
         this.password = password;
         this.name = name;
         this.birthDate = birthDate;
+        this.gender = gender;
         this.role = role != null ? role : "ROLE_USER";
         this.useYn = useYn != null ? useYn : "Y";
     }

@@ -1,7 +1,11 @@
 :root {
   --primary-color: #3b82f6; /* Calmer Blue */
   --primary-hover: #2563eb;
-  --bg-gradient: linear-gradient(135deg, #fdfbf7 0%, #f3f0e8 100%); /* Soft Ivory */
+  --bg-gradient: linear-gradient(
+    135deg,
+    #fdfbf7 0%,
+    #f3f0e8 100%
+  ); /* Soft Ivory */
   --card-bg: #ffffff;
   --text-main: #1f2937;
   --text-muted: #6b7280;
@@ -211,6 +215,50 @@ body {
 
 .helper-text.error {
   color: #ef4444;
+}
+
+/* Radio Group Styles */
+.radio-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s;
+  flex: 1;
+  justify-content: center;
+}
+
+.radio-label:hover {
+  border-color: var(--primary-color);
+  background-color: #f0f9ff;
+}
+
+.radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.radio-label input[type="radio"]:checked + span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.radio-label span {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  transition: all 0.2s;
+  user-select: none;
 }
 
 /* Mobile Responsive Styles */
@@ -668,7 +716,6 @@ body.dashboard-body {
   display: block;
 }
 
-
 /* Search Wrapper - Container for search box and dropdown */
 .search-wrapper {
   position: relative;
@@ -849,7 +896,6 @@ body.dashboard-body {
   color: var(--text-muted);
 }
 
-
 /* Mobile Styles for Dashboard */
 @media (max-width: 768px) {
   .navbar-container {
@@ -914,19 +960,19 @@ body.dashboard-body {
   .detail-summary {
     gap: 0.75rem;
   }
-  
+
   .summary-item {
     padding: 0.375rem 0.75rem;
   }
-  
+
   .summary-label {
     font-size: 0.75rem;
   }
-  
+
   .summary-value {
     font-size: 1.125rem;
   }
-  
+
   .summary-unit {
     font-size: 0.6875rem;
   }
@@ -975,13 +1021,13 @@ body.dashboard-body {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .detail-summary {
     width: 100%;
     justify-content: space-between;
     gap: 0.5rem;
   }
-  
+
   .summary-item {
     flex: 1;
     flex-direction: column;
@@ -1017,16 +1063,16 @@ body.dashboard-body {
     flex-direction: column;
     gap: 0.375rem;
   }
-  
+
   .nutrition-grid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  
+
   .nutrition-card {
     padding: 1.25rem;
   }
-  
+
   .nutrition-value {
     font-size: 1.5rem;
   }

@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/ai-chat.css}">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body class="dashboard-body">
     <!-- Navbar -->
@@ -62,6 +65,28 @@
                         <div class="dropdown-list" id="dropdownList"></div>
                     </div>
                 </div>
+                
+                <!-- AI Assistant Section -->
+                <div class="ai-section">
+                    <h2 class="ai-title">🤖 AI 어시스턴트</h2>
+                    <div class="ai-chat-container">
+                        <div class="ai-messages" id="aiMessages">
+                            <div class="ai-message ai-message-assistant">
+                                <div class="ai-message-content">
+                                    안녕하세요! 무엇을 도와드릴까요?
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-input-wrapper">
+                            <input type="text" class="ai-input" placeholder="질문을 입력하세요..." id="aiInput">
+                            <button class="ai-send-button" id="aiSendButton">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Right: Detail Panel -->
@@ -80,6 +105,11 @@
                             <span class="summary-unit">g</span>
                         </span>
                     </div>
+                </div>
+                <div class="nutrition-consult-wrapper">
+                    <button class="btn-nutrition-consult" id="btnNutritionConsult">
+                        ✨ AI 영양상담 받기
+                    </button>
                 </div>
                 <div class="detail-empty" id="detailEmpty">
                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -376,6 +406,208 @@
                     searchDropdown.style.display = 'none';
                 }
             });
+            
+            // AI Assistant Chat functionality
+            const aiInput = document.getElementById('aiInput');
+            const aiSendButton = document.getElementById('aiSendButton');
+            const aiMessages = document.getElementById('aiMessages');
+            let currentEventSource = null;
+            
+            function sendAiMessage() {
+                const message = aiInput.value.trim();
+                if (!message) return;
+                
+                // Add user message to chat
+                addMessageToChat(message, 'user');
+                aiInput.value = '';
+                
+                // Create AI response container
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.className = 'ai-message ai-message-assistant';
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'ai-message-content';
+                aiMessageDiv.appendChild(contentDiv);
+                aiMessages.appendChild(aiMessageDiv);
+                
+                // Scroll to bottom
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+                
+                // Close existing connection if any
+                if (currentEventSource) {
+                    currentEventSource.close();
+                }
+                
+                // Create EventSource for streaming
+                const encodedPrompt = encodeURIComponent(message);
+                currentEventSource = new EventSource(`/api/gemini/chat/stream?prompt=${encodedPrompt}`);
+                
+                let fullResponse = '';
+                currentEventSource.onmessage = function(event) {
+                    let text = event.data;
+                    if (text && text !== '[DONE]') {
+                        // data: 접두사 제거 (혹시 남아있는 경우)
+                        if (text.startsWith('data: ')) {
+                            text = text.substring(6);
+                        }
+                        fullResponse += text;
+                        // Markdown 렌더링
+                        if (typeof marked !== 'undefined') {
+                            contentDiv.innerHTML = marked.parse(fullResponse);
+                        } else {
+                            contentDiv.textContent = fullResponse;
+                        }
+                        aiMessages.scrollTop = aiMessages.scrollHeight;
+                    }
+                };
+                
+                currentEventSource.onerror = function(error) {
+                    console.error('AI 스트리밍 오류:', error);
+                    if (contentDiv.textContent === '') {
+                        contentDiv.textContent = '죄송합니다. 응답을 생성하는 중 오류가 발생했습니다.';
+                    }
+                    currentEventSource.close();
+                    currentEventSource = null;
+                };
+                
+                currentEventSource.addEventListener('end', function() {
+                    currentEventSource.close();
+                    currentEventSource = null;
+                });
+            }
+            
+            function addMessageToChat(message, role) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `ai-message ai-message-${role}`;
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'ai-message-content';
+                contentDiv.textContent = message;
+                messageDiv.appendChild(contentDiv);
+                aiMessages.appendChild(messageDiv);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+            }
+            
+            if (aiSendButton) {
+                aiSendButton.addEventListener('click', sendAiMessage);
+            }
+            
+            if (aiInput) {
+                aiInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendAiMessage();
+                    }
+                });
+            }
+            
+            // Nutrition Consultation Button
+            const btnNutritionConsult = document.getElementById('btnNutritionConsult');
+            if (btnNutritionConsult) {
+                btnNutritionConsult.addEventListener('click', function() {
+                    requestNutritionConsultation();
+                });
+            }
+            
+            /**
+             * AI 영양상담 요청
+             */
+            function requestNutritionConsultation() {
+                // 음식 리스트 확인
+                if (todayFoodList.length === 0) {
+                    alert('먹은 음식을 추가해주세요.');
+                    return;
+                }
+                
+                // 사용자 정보 가져오기
+                fetch('/api/member/info')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            const memberInfo = data.data;
+                            const prompt = generateNutritionPrompt(memberInfo);
+                            
+                            // AI 입력창에 포커스
+                            aiInput.scrollIntoView({ behavior: 'smooth' });
+                            
+                            // AI에게 자동으로 메시지 전송
+                            addMessageToChat(prompt, 'user');
+                            
+                            // AI 응답 받기
+                            const aiMessageDiv = document.createElement('div');
+                            aiMessageDiv.className = 'ai-message ai-message-assistant';
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'ai-message-content';
+                            aiMessageDiv.appendChild(contentDiv);
+                            aiMessages.appendChild(aiMessageDiv);
+                            aiMessages.scrollTop = aiMessages.scrollHeight;
+                            
+                            // EventSource로 스트리밍
+                            if (currentEventSource) {
+                                currentEventSource.close();
+                            }
+                            
+                            const encodedPrompt = encodeURIComponent(prompt);
+                            currentEventSource = new EventSource(`/api/gemini/chat/stream?prompt=${encodedPrompt}`);
+                            
+                            let nutritionResponse = '';
+                            currentEventSource.onmessage = function(event) {
+                                let text = event.data;
+                                if (text && text !== '[DONE]') {
+                                    // data: 접두사 제거 (혹시 남아있는 경우)
+                                    if (text.startsWith('data: ')) {
+                                        text = text.substring(6);
+                                    }
+                                    nutritionResponse += text;
+                                    // Markdown 렌더링
+                                    if (typeof marked !== 'undefined') {
+                                        contentDiv.innerHTML = marked.parse(nutritionResponse);
+                                    } else {
+                                        contentDiv.textContent = nutritionResponse;
+                                    }
+                                    aiMessages.scrollTop = aiMessages.scrollHeight;
+                                }
+                            };
+                            
+                            currentEventSource.onerror = function(error) {
+                                console.error('AI 스트리밍 오류:', error);
+                                if (contentDiv.textContent === '') {
+                                    contentDiv.textContent = '죄송합니다. 영양상담 응답을 생성하는 중 오류가 발생했습니다.';
+                                }
+                                currentEventSource.close();
+                                currentEventSource = null;
+                            };
+                        } else {
+                            alert('사용자 정보를 가져오지 못했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('사용자 정보 조회 오류:', error);
+                        alert('사용자 정보 조회 중 오류가 발생했습니다.');
+                    });
+            }
+            
+            /**
+             * 영양상담 프롬프트 생성
+             */
+            function generateNutritionPrompt(memberInfo) {
+                const totalCalories = todayFoodList.reduce((sum, food) => sum + (parseFloat(food.calories) || 0), 0);
+                const totalProtein = todayFoodList.reduce((sum, food) => sum + (parseFloat(food.protein) || 0), 0);
+                
+                let prompt = `저는 ${memberInfo.age}세 ${memberInfo.genderName}입니다.\n\n`;
+                prompt += `오늘 먹은 음식은 다음과 같습니다:\n`;
+                
+                todayFoodList.forEach((food, index) => {
+                    prompt += `${index + 1}. ${food.foodName}: 열량 ${food.calories}kcal, 단백질 ${food.protein}g\n`;
+                });
+                
+                prompt += `\n총 열량: ${totalCalories.toFixed(1)}kcal\n`;
+                prompt += `총 단백질: ${totalProtein.toFixed(1)}g\n\n`;
+                
+                prompt += `이 식단에 대해 다음 두 가지 관점에서 평가하고 조언해주세요:\n\n`;
+                prompt += `1. **균형잡힌 식사 관점**: 영양학적으로 균형잡힌 식사를 위한 평가와 부족한 영양소, 개선 방향, 추가하면 좋을 음식 메뉴를 구체적으로 추천해주세요.\n\n`;
+                prompt += `2. **다이어트 식사 관점**: 체중 감량을 목표로 한다면, 이 식단의 문제점과 개선 방향, 대체할 수 있는 저칼로리 음식 메뉴를 구체적으로 추천해주세요.\n\n`;
+                prompt += `각 관점에서 구체적인 음식 메뉴를 3가지 이상 추천해주시고, 영양소 정보도 함께 알려주세요.`;
+                
+                return prompt;
+            }
         });
     </script>
 </body>

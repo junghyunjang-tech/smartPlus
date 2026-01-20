@@ -10,4 +10,5 @@ public class MemberDto {
     private String password;
     private String name;
     private String birthDate;
+    private String gender;
 }
