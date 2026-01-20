@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  # PostgreSQL 데이터베이스
-  postgres:
-    image: postgres:15-alpine
-    container_name: smartplus-postgres
-    environment:
-      POSTGRES_DB: smartplus
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - smartplus-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Spring Boot 애플리케이션
   app:
     build:
@@ -29,10 +8,12 @@ services:
       dockerfile: Dockerfile
     container_name: smartplus-app
     environment:
-      # 데이터베이스 연결 정보
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartplus
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      # 데이터베이스 연결 정보 (호스트의 PostgreSQL 사용)
+      # host.docker.internal은 Docker 컨테이너에서 호스트 머신에 접근하는 특수 DNS
+      # Linux에서는 --add-host 옵션이 필요하거나 직접 IP 사용
+      SPRING_DATASOURCE_URL: ${DB_URL:-jdbc:postgresql://host.docker.internal:5432/smartplus}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       # Jasypt 암호화 키 (환경변수로 관리)
       JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:-sample_secret_key}
       # JPA 설정
@@ -42,22 +23,14 @@ services:
       SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - smartplus-network
+    # Linux에서 host.docker.internal 사용을 위한 설정
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     volumes:
       # 로그 저장용 (선택사항)
       - app-logs:/app/logs
 
 volumes:
-  postgres-data:
-    driver: local
   app-logs:
     driver: local
-
-networks:
-  smartplus-network:
-    driver: bridge
